@@ -29,6 +29,7 @@ import com.wenld.birdcage.model.InFo;
 import com.wenld.birdcage.result.util.VoicePlayUtils;
 import com.wenld.birdcage.setting.IatSettings;
 import com.wenld.birdcage.ui.LoadingView;
+import com.wenld.birdcage.ui.MicrophoneView;
 import com.wenld.birdcage.ui.RecordView;
 import com.wenld.birdcage.util.FucUtil;
 import com.wenld.birdcage.util.JsonParser;
@@ -58,6 +59,9 @@ public class MainActivity extends Activity {
     private SpeechRecognizer mIat;
     // 语音听写UI
     private RecognizerDialog mIatDialog;
+
+    ViewStub viewStub_Record;//录音时UI
+    MicrophoneView microphoneView_layout_record;
 
     ViewStub viewStub_loading; //正在解析语音;
     LoadingView loadingView_layout_loading;//进度条
@@ -110,7 +114,8 @@ public class MainActivity extends Activity {
         });
 
         // TODO: 2017/1/12 测试用 后续 需要删除
-        showLoading();
+//        showLoading();
+        showMicrophone();
     }
 
     private void initBase() {
@@ -189,6 +194,7 @@ public class MainActivity extends Activity {
     }
 
     class timer implements Runnable {
+
         int pos = 0;
 
         public timer(int pos) {
@@ -216,6 +222,7 @@ public class MainActivity extends Activity {
                 }
             }
         }
+
     }
 
     /**
@@ -275,6 +282,18 @@ public class MainActivity extends Activity {
         }
     };
 
+    private void showMicrophone() {
+        if (viewStub_Record == null) {
+            viewStub_Record = (ViewStub) findViewById(R.id.viewStub_record);
+            viewStub_Record.setLayoutResource(R.layout.layout_record);
+            View view = viewStub_Record.inflate();
+            microphoneView_layout_record = (MicrophoneView) view.findViewById(R.id.microphoneView_layout_record);
+        }
+        if (viewStub_loading != null)
+            viewStub_loading.setVisibility(View.GONE);
+        viewStub_Record.setVisibility(View.VISIBLE);
+    }
+
     void showLoading() {
         if (viewStub_loading == null) {
             viewStub_loading = (ViewStub) findViewById(R.id.viewStub_loading);
@@ -283,6 +302,8 @@ public class MainActivity extends Activity {
             loadingView_layout_loading = (LoadingView) view.findViewById(R.id.loadingView_layout_loading);
 
         }
+        if (viewStub_Record != null)
+            viewStub_Record.setVisibility(View.GONE);
         loadingView_layout_loading.start();
         viewStub_loading.setVisibility(View.VISIBLE);
     }

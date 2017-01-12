@@ -2,9 +2,13 @@ package com.wenld.birdcage.ui;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.SweepGradient;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -16,10 +20,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Created by Administrator on 2017/1/12.
+ * Created by wenld on 2017/1/12.
  */
 
-public class LoadingView extends View {
+public class MicrophoneView extends View {
 
     Context mContext;
     private final TypedArray typedArray;
@@ -33,8 +37,20 @@ public class LoadingView extends View {
     /**
      * 圆环渐变颜色
      */
-    private int[] doughnutColors = new int[]{0xFFDAF6FE, 0xFF45C3E5, 0xFF45C3E5, 0xFF45C3E5, 0xFFDAF6FE, 0xFF45C3E5, 0xFF45C3E5, 0xFF45C3E5};
+    private int[] doughnutColors = new int[]{0x3045C3E5,  0x1245C3E5, 0x0545C3E5, 0x1245C3E5, 0x3045C3E5, 0xC545C3E5, 0xDD45C3E5, 0xFF45C3E5, 0xDD45C3E5, 0xC545C3E5, 0x3045C3E5};
+    /**
+     * 声波线宽度
+     */
+    private int widthVoice = 1;
 
+    /**
+     * 音量
+     */
+    private float volume = 10;
+    /**
+     * 音量等级
+     */
+    private int volumeLevel = 11;
 
     private String playHintText;    //文字
     private float progress = 0;
@@ -60,11 +76,11 @@ public class LoadingView extends View {
         }
     };
 
-    public LoadingView(Context context) {
+    public MicrophoneView(Context context) {
         this(context, null);
     }
 
-    public LoadingView(Context context, AttributeSet attrs) {
+    public MicrophoneView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.mContext = context;
         typedArray = context.obtainStyledAttributes(attrs, R.styleable.recordView);
@@ -105,9 +121,32 @@ public class LoadingView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        drawRing(canvas);
-        drawText(canvas);
-        drawProgress(canvas);
+
+        onDrawMicrophone(canvas);
+        drawArc(canvas);
+
+
+//        drawRing(canvas);
+//        drawText(canvas);
+//        drawProgress(canvas);
+    }
+
+
+    /**
+     * 绘制
+     *
+     * @param canvas
+     */
+    private void onDrawMicrophone(Canvas canvas) {
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+                R.drawable.ic_microphone);
+        float w = getWidth() / 2 - dip2px(mContext, pandding + 5);
+        float h = getHeight() / 2 - dip2px(mContext, pandding + 5);
+        RectF rectF = new RectF(getWidth() / 2 - w / 2
+                , getHeight() / 2
+                , w / 2 + getWidth() / 2
+                , getHeight() / 2 + h);
+        canvas.drawBitmap(bitmap, null, rectF, null);
     }
 
     private void drawText(Canvas canvas) {
@@ -131,7 +170,7 @@ public class LoadingView extends View {
          */
         mPaint.setAntiAlias(true);//消除锯齿
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(dip2px(mContext, widthing));
+        mPaint.setStrokeWidth(dip2px(mContext, widthVoice));
         mPaint.setColor(mContext.getResources().getColor(R.color.RoundColor));
         RectF oval = new RectF(dip2px(mContext, pandding)
                 , dip2px(mContext, pandding)
@@ -145,7 +184,7 @@ public class LoadingView extends View {
      */
     private void drawProgress(Canvas canvas) {
         mPaint.setColor(getResources().getColor(R.color.RoundFillColor));
-        mPaint.setStrokeWidth(dip2px(mContext, widthing));
+        mPaint.setStrokeWidth(dip2px(mContext, widthVoice));
 //        mPaint.setShader(new SweepGradient(getWidth() / 2, getHeight() / 2, doughnutColors, null));
         RectF oval = new RectF(dip2px(mContext, pandding)
                 , dip2px(mContext, pandding)
@@ -153,6 +192,49 @@ public class LoadingView extends View {
                 , getHeight() - dip2px(mContext, pandding));
         canvas.drawArc(oval, progress, 90, false, mPaint);    //绘制圆弧
         mPaint.reset();
+    }
+
+    private void drawArc(Canvas canvas) {
+        mPaint.setAntiAlias(true);//消除锯齿
+        mPaint.setStyle(Paint.Style.STROKE);
+//        mPaint.setColor(getResources().getColor(R.color.RoundFillColor));
+        mPaint.setStrokeWidth(dip2px(mContext, widthVoice));
+        mPaint.setShader(new SweepGradient(getWidth() / 2, getHeight() / 2, doughnutColors, null));
+        float r = getWidth() / 2f - dip2px(mContext, pandding);
+        for (int i = 5; i > 0; i--) {
+            drawArc(r, i, canvas);
+        }
+        drawLightArc(r, volumeLevel, canvas);
+        mPaint.reset();
+    }
+
+    private void drawArc(float r, int i, Canvas canvas) {
+        float currentR = r / 5 * (i);
+
+        RectF oval = new RectF(getWidth() / 2 - currentR
+                , getHeight() / 2 - currentR
+                , getWidth() / 2 + currentR
+                , getHeight() / 2 + currentR);
+        canvas.drawArc(oval, 160, 360, false, mPaint);    //绘制圆弧
+    }
+
+    /**
+     * 亮
+     *
+     * @param r
+     * @param i
+     * @param canvas
+     */
+    private void drawLightArc(float r, int i, Canvas canvas) {
+        mPaint.setStyle(Paint.Style.FILL);
+        mPaint.setShader(new SweepGradient(getWidth() / 2, getHeight() / 2, Color.parseColor("#2245C3E5"), Color.parseColor("#2245C3E5")));
+        float currentR = r / 20 * (i);
+
+        RectF oval = new RectF(getWidth() / 2 - currentR
+                , getHeight() / 2 - currentR
+                , getWidth() / 2 + currentR
+                , getHeight() / 2 + currentR);
+        canvas.drawArc(oval, 160, 360, true, mPaint);    //绘制圆弧
     }
 
     /**
@@ -178,17 +260,34 @@ public class LoadingView extends View {
         try {
             postInvalidate();
             progressTask.cancel();
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
     }
 
+    public void setVolume(int volume) {
+        if (volume <= 0 && volume > 100) {
+            throw new NullPointerException("数值在0-100, 请转换。");
+        } else {
+            this.volume = volume*20;
+            if (this.volume < 20) {
+                volumeLevel = 1;
+                return;
+            } else if (  this.volume == 200) {
+                volumeLevel = 20;
+                return;
+            }
+            volumeLevel = volume / 20;
+        }
+
+    }
+
     public void cancel() {
         try {
-            progress=0;
+            progress = 0;
             postInvalidate();
             progressTask.cancel();
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
     }

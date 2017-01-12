@@ -67,7 +67,7 @@ public class AnimTestActivity extends AppCompatActivity implements View.OnTouchL
             loadingView.start();
         }else if(event.getAction() == MotionEvent.ACTION_UP){
             mRecorfView.cancel();
-            loadingView.cancel();
+            loadingView.stop();
         }
         return false;
     }

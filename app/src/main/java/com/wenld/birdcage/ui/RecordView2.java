@@ -74,7 +74,7 @@ public class RecordView2 extends View {
 //                if(countdownTime2 == 0){
 //                    listener.onCountDown();
 //                    canSetVolume = false;
-//                    timeTask.cancel();
+//                    timeTask.stop();
 //                    postInvalidate();
 //                }
             } else if (msg.what == 2) {
@@ -83,7 +83,7 @@ public class RecordView2 extends View {
 //                if(progress >360){
 //                    targetVolume = 1;
 //                    postInvalidate();
-//                    progressTask.cancel();
+//                    progressTask.stop();
 //                }else
                 postInvalidate();
             }
