@@ -31,10 +31,10 @@
         android:summary="默认值：有标点 "
         android:defaultValue="1"  />
     
-	<CheckBoxPreference
+<!--	<CheckBoxPreference
 		android:key="@string/pref_key_iat_show"
 		android:title="@string/pref_title_iat_show"
-		android:defaultValue="true" />
+		android:defaultValue="true" />-->
 
 </PreferenceScreen>
 

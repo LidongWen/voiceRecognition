@@ -22,17 +22,15 @@ import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SpeechUtility;
 import com.iflytek.cloud.SynthesizerListener;
-import com.iflytek.cloud.ui.RecognizerDialog;
-import com.iflytek.cloud.ui.RecognizerDialogListener;
 import com.seven.birdcage.R;
 import com.wenld.birdcage.model.InFo;
-import com.wenld.birdcage.result.util.VoicePlayUtils;
 import com.wenld.birdcage.setting.IatSettings;
 import com.wenld.birdcage.ui.LoadingView;
 import com.wenld.birdcage.ui.MicrophoneView;
 import com.wenld.birdcage.ui.RecordView;
 import com.wenld.birdcage.util.FucUtil;
 import com.wenld.birdcage.util.JsonParser;
+import com.wenld.birdcage.util.VoicePlayUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,8 +55,6 @@ public class MainActivity extends Activity {
 
     // 语音听写对象
     private SpeechRecognizer mIat;
-    // 语音听写UI
-    private RecognizerDialog mIatDialog;
 
     ViewStub viewStub_Record;//录音时UI
     MicrophoneView microphoneView_layout_record;
@@ -81,7 +77,8 @@ public class MainActivity extends Activity {
 
 
     TextView tv;
-    Button btn;
+    Button btnStart;
+    Button btnFlag;
 
     List<InFo> inFos = new ArrayList<>();
 
@@ -96,26 +93,29 @@ public class MainActivity extends Activity {
         //语言合成
         initTts();
 
-        // 初始化听写Dialog，如果只使用有UI听写功能，无需创建SpeechRecognizer
-        // 使用UI听写功能，请根据sdk文件目录下的notice.txt,放置布局文件和图片资源
-        mIatDialog = new RecognizerDialog(this, mInitListener);
-        mIatDialog.setCanceledOnTouchOutside(true);
 
         initData();
 //        gogogo();
 
         tv = (TextView) findViewById(R.id.tv_activity_main);
-        btn = (Button) findViewById(R.id.btn_start);
-        btn.setOnClickListener(new View.OnClickListener() {
+        btnStart = (Button) findViewById(R.id.btn_start);
+        btnFlag = (Button) findViewById(R.id.btn_flag);
+        btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                showMicrophone();
                 gogogo();
+            }
+        });
+        btnFlag.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showLoading();
             }
         });
 
         // TODO: 2017/1/12 测试用 后续 需要删除
 //        showLoading();
-        showMicrophone();
     }
 
     private void initBase() {
@@ -190,7 +190,7 @@ public class MainActivity extends Activity {
 
     private void gogogo() {
         goPos++;
-        new Handler().postDelayed(new timer(goPos), 500);
+        new Handler().postDelayed(new timer(goPos), 1000);
     }
 
     class timer implements Runnable {
@@ -204,21 +204,12 @@ public class MainActivity extends Activity {
         @Override
         public void run() {
             if (pos == goPos) {
-                boolean isShowDialog = mSharedPreferences.getBoolean(
-                        getString(R.string.pref_key_iat_show), false);
-                if (isShowDialog && mIatDialog != null) {
-                    // 显示听写对话框
-                    mIatDialog.setListener(mRecognizerDialogListener);
-                    mIatDialog.show();
-                    showTip(getString(R.string.text_begin));
+                // 不显示听写对话框
+                ret = mIat.startListening(mRecognizerListener);
+                if (ret != ErrorCode.SUCCESS) {
+                    showTip("听写失败,错误码：" + ret);
                 } else {
-                    // 不显示听写对话框
-                    ret = mIat.startListening(mRecognizerListener);
-                    if (ret != ErrorCode.SUCCESS) {
-                        showTip("听写失败,错误码：" + ret);
-                    } else {
-                        showTip(getString(R.string.text_begin));
-                    }
+                    showTip(getString(R.string.text_begin));
                 }
             }
         }
@@ -235,6 +226,9 @@ public class MainActivity extends Activity {
             // 此回调表示：sdk内部录音机已经准备好了，用户可以开始语音输入
             showTip("开始说话");
             tv.setText("开始说话");
+
+            showMicrophone();
+            mIatResults.clear();
         }
 
         @Override
@@ -244,23 +238,53 @@ public class MainActivity extends Activity {
             // 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
             showTip(error.getPlainDescription(true));
             tv.setText(error.getPlainDescription(true));
+            mIatResults.clear();
+            showError();
             gogogo();
         }
 
         @Override
         public void onEndOfSpeech() {
             // 此回调表示：检测到了语音的尾端点，已经进入识别过程，不再接受语音输入
-
-            showTip("结束说话");
-            tv.setText("结束说话");
+            showLoading();
         }
 
         @Override
         public void onResult(RecognizerResult results, boolean isLast) {
             Log.d(TAG, results.getResultString());
-
+            printResult(results);        // TODO 最后的结果
             if (isLast) {
-                printResult(results);        // TODO 最后的结果
+                showSuccess();
+
+                StringBuffer resultBuffer = new StringBuffer();
+                for (String key : mIatResults.keySet()) {
+                    resultBuffer.append(mIatResults.get(key));
+                }
+
+                String str = resultBuffer.toString();
+                tv.setText(str);
+
+                for (InFo inFo : inFos) {
+                    if (str.contains(inFo.getShibieString())) {
+                        showTip(inFo.getShibieString());
+                        switch (inFo.getType()) {
+                            case FLAG_PALY_VOICE:
+                                mTts.startSpeaking(inFo.getPalyString(), mTtsListener);
+                                return;
+                            case FLAG_PLAY_FILE:
+                                VoicePlayUtils.ControlPlayVoice(inFo.getFileName(), MainActivity.this, new VoicePlayUtils.voiceListener() {
+                                    @Override
+                                    public void finish() {
+                                        // TODO: 2017/1/12 结束后继续监听
+//                        gogogo();
+                                    }
+                                });
+                                return;
+                        }
+                    }
+                }
+                // TODO: 2017/1/12 继续监听
+//        gogogo();
             }
         }
 
@@ -269,6 +293,10 @@ public class MainActivity extends Activity {
 //            showTip("当前正在说话，音量大小：" + volume);
             Log.d(TAG, "返回音频数据：" + data.length);
             tv.setText("当前正在说话，音量大小：" + volume + "\n返回音频数据：" + data.length);
+            if (microphoneView_layout_record != null) {
+                int v = (int) ((double) volume * 100 / 30);
+                microphoneView_layout_record.setVolume(v);
+            }
         }
 
         @Override
@@ -289,23 +317,45 @@ public class MainActivity extends Activity {
             View view = viewStub_Record.inflate();
             microphoneView_layout_record = (MicrophoneView) view.findViewById(R.id.microphoneView_layout_record);
         }
+        microphoneView_layout_record.setModel(MicrophoneView.MODEL_RECORD);
         if (viewStub_loading != null)
             viewStub_loading.setVisibility(View.GONE);
         viewStub_Record.setVisibility(View.VISIBLE);
     }
 
     void showLoading() {
-        if (viewStub_loading == null) {
-            viewStub_loading = (ViewStub) findViewById(R.id.viewStub_loading);
-            viewStub_loading.setLayoutResource(R.layout.layout_loading);
-            View view = viewStub_loading.inflate();
-            loadingView_layout_loading = (LoadingView) view.findViewById(R.id.loadingView_layout_loading);
-
+        if (viewStub_Record == null) {
+            viewStub_Record = (ViewStub) findViewById(R.id.viewStub_record);
+            viewStub_Record.setLayoutResource(R.layout.layout_record);
+            View view = viewStub_Record.inflate();
+            microphoneView_layout_record = (MicrophoneView) view.findViewById(R.id.microphoneView_layout_record);
         }
-        if (viewStub_Record != null)
+        microphoneView_layout_record.setModel(MicrophoneView.MODEL_LOADING);
+        if (viewStub_loading != null)
+            viewStub_loading.setVisibility(View.GONE);
+        viewStub_Record.setVisibility(View.VISIBLE);
+    }
+
+    void showError() {
+        if (viewStub_loading != null)
+            viewStub_loading.setVisibility(View.GONE);
+        if (viewStub_Record != null) {
             viewStub_Record.setVisibility(View.GONE);
-        loadingView_layout_loading.start();
-        viewStub_loading.setVisibility(View.VISIBLE);
+        }
+        if (microphoneView_layout_record != null) {
+            microphoneView_layout_record.stop();
+        }
+    }
+
+    void showSuccess() {
+        if (viewStub_loading != null)
+            viewStub_loading.setVisibility(View.GONE);
+        if (viewStub_Record != null) {
+            viewStub_Record.setVisibility(View.GONE);
+        }
+        if (microphoneView_layout_record != null) {
+            microphoneView_layout_record.stop();
+        }
     }
 
     private void printResult(RecognizerResult results) {
@@ -320,58 +370,7 @@ public class MainActivity extends Activity {
         }
 
         mIatResults.put(sn, text);
-
-        StringBuffer resultBuffer = new StringBuffer();
-        for (String key : mIatResults.keySet()) {
-            resultBuffer.append(mIatResults.get(key));
-        }
-
-        String str = resultBuffer.toString();
-        tv.setText(str);
-
-        for (InFo inFo : inFos) {
-            if (str.contains(inFo.getShibieString())) {
-                showTip(inFo.getShibieString());
-                switch (inFo.getType()) {
-                    case FLAG_PALY_VOICE:
-                        mTts.startSpeaking(inFo.getPalyString(), mTtsListener);
-                        return;
-                    case FLAG_PLAY_FILE:
-                        VoicePlayUtils.ControlPlayVoice(inFo.getFileName(), this, new VoicePlayUtils.voiceListener() {
-                            @Override
-                            public void finish() {
-                                // TODO: 2017/1/12 结束后继续监听
-//                        gogogo();
-                            }
-                        });
-                        return;
-                }
-            }
-        }
-        // TODO: 2017/1/12 继续监听
-//        gogogo();
     }
-
-    /**
-     * 听写UI监听器
-     */
-    private RecognizerDialogListener mRecognizerDialogListener = new RecognizerDialogListener() {
-        public void onResult(RecognizerResult results, boolean isLast) {
-            if (!isLast) {
-                printResult(results);
-            }
-        }
-
-        /**
-         * 识别回调错误.
-         */
-        public void onError(SpeechError error) {
-            showTip(error.getPlainDescription(true));
-            // TODO: 2017/1/9 未能识别
-            gogogo();
-        }
-    };
-
 
     int ret = 0; // 函数调用返回值
 
@@ -437,12 +436,11 @@ public class MainActivity extends Activity {
             // 退出时释放连接
             mIat.cancel();
             mIat.destroy();
-            mIatDialog.dismiss();
 
             mTts.stopSpeaking();
             // 退出时释放连接
             mTts.destroy();
-
+            VoicePlayUtils.stopPlayVoice();
         } catch (Exception e) {
 
         }
@@ -476,19 +474,19 @@ public class MainActivity extends Activity {
 
         @Override
         public void onSpeakBegin() {
-            startPalyAnim();
+//            startPalyAnim();
 //            showTip("开始播放");
         }
 
         @Override
         public void onSpeakPaused() {
-            stopPalyAnim();
+//            stopPalyAnim();
 //            showTip("暂停播放");
         }
 
         @Override
         public void onSpeakResumed() {
-            startPalyAnim();
+//            startPalyAnim();
 //            showTip("继续播放");
         }
 
@@ -523,18 +521,4 @@ public class MainActivity extends Activity {
             //	}
         }
     };
-
-    /**
-     * 语音播放动画
-     */
-    public void startPalyAnim() {
-
-    }
-
-    /**
-     * 语音播放动画关闭
-     */
-    public void stopPalyAnim() {
-
-    }
 }

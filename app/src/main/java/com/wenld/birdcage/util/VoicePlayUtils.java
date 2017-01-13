@@ -1,5 +1,5 @@
 
-package com.wenld.birdcage.result.util;
+package com.wenld.birdcage.util;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;

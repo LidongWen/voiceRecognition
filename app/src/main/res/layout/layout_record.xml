@@ -7,8 +7,13 @@
 
     <com.wenld.birdcage.ui.MicrophoneView
         android:id="@+id/microphoneView_layout_record"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:layout_centerInParent="true"
-        loadingView:playHintText="正在识别中." />
+        loadingView:hintTextSize="18sp"
+        loadingView:model="play_model"
+        loadingView:ringWidth="2dp"
+        loadingView:voiceWidth="1dp"
+        loadingView:playHintText="标识中..."
+        loadingView:textHintColor="@color/RoundFillColor" />
 </RelativeLayout>

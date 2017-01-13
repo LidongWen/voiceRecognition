@@ -19,6 +19,8 @@ import com.seven.birdcage.R;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static android.R.attr.mode;
+
 /**
  * Created by wenld on 2017/1/12.
  */
@@ -27,32 +29,42 @@ public class MicrophoneView extends View {
 
     Context mContext;
     private final TypedArray typedArray;
+    public final static int MODEL_LOADING = 3;//标识中
+    public final static int MODEL_PLAY = 2; //播放
+    public final static int MODEL_RECORD = 1;//录制
+    /**
+     * 默认是录制模式
+     */
+    private int model = MODEL_RECORD;
 
     //View默认最小宽度
     private static final int DEFAULT_MIN_WIDTH = 400;
+
     //圆环的边距
     private int pandding = 10;
     //圆环的宽度
-    private int widthing = 3;
+    private float ringWidth = 3;
     /**
      * 圆环渐变颜色
      */
-    private int[] doughnutColors = new int[]{0x3045C3E5,  0x1245C3E5, 0x0545C3E5, 0x1245C3E5, 0x3045C3E5, 0xC545C3E5, 0xDD45C3E5, 0xFF45C3E5, 0xDD45C3E5, 0xC545C3E5, 0x3045C3E5};
+    private int[] doughnutColors = new int[]{0x3045C3E5, 0x1245C3E5, 0x0545C3E5, 0x1245C3E5, 0x3045C3E5, 0x3045C3E5, 0xC545C3E5, 0xDD45C3E5, 0xFF45C3E5, 0xDD45C3E5, 0xC545C3E5, 0x3045C3E5};
     /**
      * 声波线宽度
      */
-    private int widthVoice = 1;
-
+    private float voiceWidth = 2;
     /**
      * 音量
      */
-    private float volume = 10;
+    private int volume = 10;
     /**
      * 音量等级
      */
-    private int volumeLevel = 11;
+    private int volumeLevel = 2;
 
     private String playHintText;    //文字
+    private float textHintSize;
+    private int textHintColor;
+
     private float progress = 0;
 
     private Paint mPaint;
@@ -90,7 +102,14 @@ public class MicrophoneView extends View {
     }
 
     private void initAtts() {
+        model = typedArray.getInt(R.styleable.recordView_model, MODEL_RECORD);
         playHintText = typedArray.getString(R.styleable.recordView_playHintText);
+        textHintSize = typedArray.getDimension(R.styleable.recordView_hintTextSize, dip2px(mContext, 15));
+        textHintColor = typedArray.getColor(R.styleable.recordView_textHintColor, getResources().getColor(R.color.RoundFillColor));
+
+        ringWidth = typedArray.getDimension(R.styleable.recordView_ringWidth, dip2px(mContext, 3));
+
+        voiceWidth=typedArray.getDimension(R.styleable.recordView_voiceWidth, dip2px(mContext, 1));
     }
 
     /**
@@ -121,19 +140,29 @@ public class MicrophoneView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        int left = getPaddingLeft();
+        int top = getPaddingTop();
+        int right = getWidth() - getPaddingRight();
+        int bottom = getHeight() - getPaddingBottom();
 
-        onDrawMicrophone(canvas);
-        drawArc(canvas);
-
-
-//        drawRing(canvas);
-//        drawText(canvas);
-//        drawProgress(canvas);
+        switch (model) {
+            case MODEL_LOADING: {
+                drawRing(canvas);
+                drawText(canvas);
+                drawProgress(canvas);
+            }
+            break;
+            case MODEL_RECORD:
+            case MODEL_PLAY:
+                onDrawMicrophone(canvas);
+                drawArc(canvas);
+                break;
+        }
     }
 
 
     /**
-     * 绘制
+     * 绘制 麦克风图标
      *
      * @param canvas
      */
@@ -154,8 +183,8 @@ public class MicrophoneView extends View {
          * 画中间文字
          * */
         Paint paint2 = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint2.setTextSize(dip2px(mContext, 14));
-        paint2.setColor(mContext.getResources().getColor(R.color.RoundFillColor));
+        paint2.setTextSize(textHintSize);
+        paint2.setColor(textHintColor);
         Paint.FontMetrics fm = mPaint.getFontMetrics();
         paint2.setTextAlign(Paint.Align.CENTER);
         if (playHintText == null) {
@@ -170,7 +199,7 @@ public class MicrophoneView extends View {
          */
         mPaint.setAntiAlias(true);//消除锯齿
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(dip2px(mContext, widthVoice));
+        mPaint.setStrokeWidth(ringWidth);
         mPaint.setColor(mContext.getResources().getColor(R.color.RoundColor));
         RectF oval = new RectF(dip2px(mContext, pandding)
                 , dip2px(mContext, pandding)
@@ -183,22 +212,38 @@ public class MicrophoneView extends View {
      * 绘制圆弧
      */
     private void drawProgress(Canvas canvas) {
-        mPaint.setColor(getResources().getColor(R.color.RoundFillColor));
-        mPaint.setStrokeWidth(dip2px(mContext, widthVoice));
-//        mPaint.setShader(new SweepGradient(getWidth() / 2, getHeight() / 2, doughnutColors, null));
-        RectF oval = new RectF(dip2px(mContext, pandding)
-                , dip2px(mContext, pandding)
-                , getWidth() - dip2px(mContext, pandding)
-                , getHeight() - dip2px(mContext, pandding));
-        canvas.drawArc(oval, progress, 90, false, mPaint);    //绘制圆弧
+        for (int i = 0; i < 3; i++) {
+            drawProgress(i, canvas);
+        }
         mPaint.reset();
+    }
+
+    /**
+     * 绘制圆弧
+     */
+    private void drawProgress(int i, Canvas canvas) {
+        mPaint.setColor(getResources().getColor(R.color.RoundFillColor));
+        mPaint.setStrokeWidth(ringWidth);
+//        if(i%2==0){
+//            mPaint.setPathEffect(null);
+//        }else{
+//            PathEffect effects = new DashPathEffect(new float[]{100,60,50,20},1);
+//            mPaint.setPathEffect(effects);
+//        }
+//        mPaint.setShader(new SweepGradient(getWidth() / 2, getHeight() / 2, doughnutColors, null));
+        float length = (float) (45 * Math.sin(Math.toRadians(i * 60 + progress)) + 75);
+        RectF oval = new RectF(dip2px(mContext, pandding + 2 * i)
+                , dip2px(mContext, pandding + 2 * i)
+                , getWidth() - dip2px(mContext, pandding + 2 * i)
+                , getHeight() - dip2px(mContext, pandding + 2 * i));
+        canvas.drawArc(oval, (120 - length) + progress + i * 80, length, false, mPaint);    //绘制圆弧
     }
 
     private void drawArc(Canvas canvas) {
         mPaint.setAntiAlias(true);//消除锯齿
         mPaint.setStyle(Paint.Style.STROKE);
 //        mPaint.setColor(getResources().getColor(R.color.RoundFillColor));
-        mPaint.setStrokeWidth(dip2px(mContext, widthVoice));
+        mPaint.setStrokeWidth(voiceWidth);
         mPaint.setShader(new SweepGradient(getWidth() / 2, getHeight() / 2, doughnutColors, null));
         float r = getWidth() / 2f - dip2px(mContext, pandding);
         for (int i = 5; i > 0; i--) {
@@ -210,7 +255,6 @@ public class MicrophoneView extends View {
 
     private void drawArc(float r, int i, Canvas canvas) {
         float currentR = r / 5 * (i);
-
         RectF oval = new RectF(getWidth() / 2 - currentR
                 , getHeight() / 2 - currentR
                 , getWidth() / 2 + currentR
@@ -227,6 +271,7 @@ public class MicrophoneView extends View {
      */
     private void drawLightArc(float r, int i, Canvas canvas) {
         mPaint.setStyle(Paint.Style.FILL);
+//        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.LIGHTEN));
         mPaint.setShader(new SweepGradient(getWidth() / 2, getHeight() / 2, Color.parseColor("#2245C3E5"), Color.parseColor("#2245C3E5")));
         float currentR = r / 20 * (i);
 
@@ -240,9 +285,25 @@ public class MicrophoneView extends View {
     /**
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
      */
-    public static int dip2px(Context context, float dpValue) {
+    public static float dip2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (dpValue * scale + 0.5f);
+        return (dpValue * scale + 0.5f);
+    }
+
+    public void setModel(int model) {
+        this.model = model;
+        if (model == MODEL_RECORD) {
+
+        } else if (model == MODEL_PLAY) {
+
+        } else if (model == MODEL_LOADING) {
+            start();
+        }
+        postInvalidate();
+    }
+
+    public int getModel() {
+        return model;
     }
 
     public void start() {
@@ -258,28 +319,32 @@ public class MicrophoneView extends View {
 
     public void stop() {
         try {
+            if (progressTask != null)
+                progressTask.cancel();
             postInvalidate();
-            progressTask.cancel();
         } catch (Exception e) {
 
         }
     }
 
     public void setVolume(int volume) {
-        if (volume <= 0 && volume > 100) {
-            throw new NullPointerException("数值在0-100, 请转换。");
-        } else {
-            this.volume = volume*20;
-            if (this.volume < 20) {
-                volumeLevel = 1;
-                return;
-            } else if (  this.volume == 200) {
-                volumeLevel = 20;
-                return;
+        if (model == MODEL_RECORD || mode == MODEL_PLAY) {
+            if (volume <= 0 && volume > 100) {
+                throw new NullPointerException("数值在0-100, 请转换。");
+            } else {
+                this.volume = volume * 2;
+                if (this.volume < 10) {
+                    volumeLevel = 1;
+                    return;
+                } else if (this.volume == 200) {
+                    volumeLevel = 20;
+                    return;
+                } else {
+                    volumeLevel = this.volume / 10;
+                }
             }
-            volumeLevel = volume / 20;
+            postInvalidate();
         }
-
     }
 
     public void cancel() {
