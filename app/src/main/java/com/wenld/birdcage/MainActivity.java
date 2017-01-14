@@ -145,8 +145,9 @@ public class MainActivity extends Activity {
 
     private void initData() {
         inFos.add(new InFo("", "你好", "你好", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
-        inFos.add(new InFo("", "什么名字", "我叫\"嘿嘿嘿\"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
-        inFos.add(new InFo("", "叫什么", "我叫\"嘿嘿嘿\"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "hello", "你好", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "什么名字", "我叫\" 小柒 \"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "叫什么", "我叫\" 小柒 \"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "你多大了", "我1岁了", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "唱歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "唱首歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
@@ -160,7 +161,6 @@ public class MainActivity extends Activity {
         inFos.add(new InFo("voice/gongji.mp3", "打鸣", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("voice/huangli.WAV", "黄鹂", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("voice/zhegu.WAV", "鹧鸪", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
-
 
     }
 
@@ -207,7 +207,7 @@ public class MainActivity extends Activity {
                 if (ret != ErrorCode.SUCCESS) {
                     showTip("听写失败,错误码：" + ret);
                 } else {
-                    showTip(getString(R.string.text_begin));
+//                    showTip(getString(R.string.text_begin));
                 }
             }
         }
@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
         @Override
         public void onBeginOfSpeech() {
             // 此回调表示：sdk内部录音机已经准备好了，用户可以开始语音输入
-            showTip("开始说话");
+//            showTip("开始说话");
 
             showMicrophone();
             mIatResults.clear();
@@ -235,7 +235,6 @@ public class MainActivity extends Activity {
             showTip(error.getPlainDescription(true));
 
             addData(new InFo("", "", error.getPlainDescription(true), "", InFo.CONTENT_ROBOT));
-
             isRun = false;
             mIatResults.clear();
             showError();
