@@ -55,7 +55,7 @@ public class MicrophoneView extends View {
     /**
      * 音量
      */
-    private int volume = 10;
+    private int volume = 1;
     /**
      * 音量等级
      */
@@ -109,7 +109,7 @@ public class MicrophoneView extends View {
 
         ringWidth = typedArray.getDimension(R.styleable.recordView_ringWidth, dip2px(mContext, 3));
 
-        voiceWidth=typedArray.getDimension(R.styleable.recordView_voiceWidth, dip2px(mContext, 1));
+        voiceWidth = typedArray.getDimension(R.styleable.recordView_voiceWidth, dip2px(mContext, 1));
     }
 
     /**
@@ -190,7 +190,7 @@ public class MicrophoneView extends View {
         if (playHintText == null) {
             playHintText = "正在播放录音.";
         }
-        canvas.drawText(playHintText, getWidth() / 2, (getHeight() + fm.descent - fm.ascent) / 2, paint2);
+        canvas.drawText(playHintText, getWidth() / 2, (getHeight() + fm.descent - fm.ascent) / 2 - fm.descent, paint2);
     }
 
     private void drawRing(Canvas canvas) {

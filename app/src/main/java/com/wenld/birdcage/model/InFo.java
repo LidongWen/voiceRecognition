@@ -10,6 +10,10 @@ public class InFo implements Serializable {
     public static final String FLAG_PLAY_FILE = "FLAG_Play_File";//播放文件
     public static final String FLAG_PALY_VOICE = "FLAG_Paly_voice";//播放文字
 
+    public static final String CONTENT_client = "CONTENT_client"; //客户
+    public static final String CONTENT_ROBOT = "CONTENT_ROBOT";   //机器人
+
+    String content;//对象 客户||机器人
     String fileName;    //播放文件的地址
     String shibieString;//识别的语音
     String palyString;//说的语音
@@ -31,22 +35,16 @@ public class InFo implements Serializable {
         this.palyString = palyString;
     }
 
-    public InFo(String fileName, String bird) {
-        this.fileName = fileName;
-        this.shibieString = bird;
-        type = FLAG_PLAY_FILE;
+    public InFo() {
     }
 
-    public InFo(String fileName, String shibieString, String palyString, String type) {
+    ;
+
+    public InFo(String fileName, String shibieString, String palyString, String type, String content) {
         this.fileName = fileName;
         this.shibieString = shibieString;
         this.palyString = palyString;
-        this.type = type;
-    }
-
-    public InFo(String shibieString, String palyString, String type) {
-        this.shibieString = shibieString;
-        this.palyString = palyString;
+        this.content = content;
         this.type = type;
     }
 
@@ -64,5 +62,13 @@ public class InFo implements Serializable {
 
     public void setShibieString(String shibieString) {
         this.shibieString = shibieString;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

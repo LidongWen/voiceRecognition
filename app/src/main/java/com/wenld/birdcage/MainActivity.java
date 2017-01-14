@@ -4,12 +4,13 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewStub;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.iflytek.cloud.ErrorCode;
@@ -23,9 +24,9 @@ import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SpeechUtility;
 import com.iflytek.cloud.SynthesizerListener;
 import com.seven.birdcage.R;
+import com.wenld.birdcage.adapter.ChatAdapterForRv;
 import com.wenld.birdcage.model.InFo;
 import com.wenld.birdcage.setting.IatSettings;
-import com.wenld.birdcage.ui.LoadingView;
 import com.wenld.birdcage.ui.MicrophoneView;
 import com.wenld.birdcage.ui.RecordView;
 import com.wenld.birdcage.util.FucUtil;
@@ -59,8 +60,7 @@ public class MainActivity extends Activity {
     ViewStub viewStub_Record;//录音时UI
     MicrophoneView microphoneView_layout_record;
 
-    ViewStub viewStub_loading; //正在解析语音;
-    LoadingView loadingView_layout_loading;//进度条
+    ViewStub viewStub_error; //正在解析语音;
 
     private int nowModel = RecordView.MODEL_RECORD;
 
@@ -76,7 +76,11 @@ public class MainActivity extends Activity {
     ApkInstaller mInstaller;
 
 
-    TextView tv;
+    RecyclerView rlv_activity_main;
+    LinearLayoutManager linearLayoutManager;
+    ChatAdapterForRv adapter;
+    List<InFo> list = new ArrayList<>(50);
+
     Button btnStart;
     Button btnFlag;
 
@@ -97,7 +101,16 @@ public class MainActivity extends Activity {
         initData();
 //        gogogo();
 
-        tv = (TextView) findViewById(R.id.tv_activity_main);
+        rlv_activity_main = (RecyclerView) findViewById(R.id.rlv_activity_main);
+        adapter = new ChatAdapterForRv(this, list);
+        for (int i = 0; i < 50; i++) {
+            list.add(new InFo("", "", i + "  _______   " + i, "", InFo.CONTENT_client));
+        }
+        linearLayoutManager = new LinearLayoutManager(this);
+        linearLayoutManager.setStackFromEnd(true);
+        rlv_activity_main.setLayoutManager(linearLayoutManager);
+        rlv_activity_main.setAdapter(adapter);
+
         btnStart = (Button) findViewById(R.id.btn_start);
         btnFlag = (Button) findViewById(R.id.btn_flag);
         btnStart.setOnClickListener(new View.OnClickListener() {
@@ -113,9 +126,7 @@ public class MainActivity extends Activity {
                 showLoading();
             }
         });
-
-        // TODO: 2017/1/12 测试用 后续 需要删除
-//        showLoading();
+        gogogo();
     }
 
     private void initBase() {
@@ -123,26 +134,6 @@ public class MainActivity extends Activity {
                 Activity.MODE_PRIVATE);
         mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
         mInstaller = new ApkInstaller(this);
-
-//        mRecorfView = (RecordView2) findViewById(R.id.recordView);
-////        mRecorfView.setCountdownTime(9);
-////        mRecorfView.setModel(RecordView.MODEL_PLAY);
-//
-//        mRecorfView.start();
-//        Timer timeTimer = new Timer(true);
-//        timeTimer.schedule(new TimerTask() {
-//            public void run() {
-//                Message msg = new Message();
-//                msg.what = 1;
-//                handler.sendMessage(msg);
-//            }
-//        }, 20, 20);
-//        mRecorfView.setOnCountDownListener(new RecordView.OnCountDownListener() {
-//            @Override
-//            public void onCountDown() {
-////                Toast.makeText(this,"计时结束啦~~",Toast.LENGTH_SHORT).show();
-//            }
-//        });
     }
 
     private void initIat() {
@@ -153,18 +144,23 @@ public class MainActivity extends Activity {
     }
 
     private void initData() {
-        inFos.add(new InFo("唱歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE));
-        inFos.add(new InFo("唱首歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE));
+        inFos.add(new InFo("", "你好", "你好", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "什么名字", "我叫\"嘿嘿嘿\"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "叫什么", "我叫\"嘿嘿嘿\"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "你多大了", "我1岁了", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "唱歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "唱首歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
 
-        inFos.add(new InFo("voice/buguniao.mp3", "布谷鸟"));
-        inFos.add(new InFo("voice/muji.mp3", "母鸡"));
-        inFos.add(new InFo("voice/bage.mp3", "八哥"));
-        inFos.add(new InFo("voice/banma.mp3", "斑马"));
-        inFos.add(new InFo("voice/baozi.mp3", "豹子"));
-        inFos.add(new InFo("voice/gongji.mp3", "公鸡"));
-        inFos.add(new InFo("voice/gongji.mp3", "打鸣"));
-        inFos.add(new InFo("voice/huangli.WAV", "黄鹂"));
-        inFos.add(new InFo("voice/zhegu.WAV", "鹧鸪"));
+        inFos.add(new InFo("voice/buguniao.mp3", "布谷鸟", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/muji.mp3", "母鸡", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/bage.mp3", "八哥", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/banma.mp3", "斑马", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/baozi.mp3", "豹子", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/gongji.mp3", "公鸡", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/gongji.mp3", "打鸣", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/huangli.WAV", "黄鹂", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("voice/zhegu.WAV", "鹧鸪", "", FLAG_PLAY_FILE, InFo.CONTENT_ROBOT));
+
 
     }
 
@@ -187,10 +183,11 @@ public class MainActivity extends Activity {
     }
 
     private int goPos = 0;
+    private boolean isRun = false;//是否正在录音
 
     private void gogogo() {
         goPos++;
-        new Handler().postDelayed(new timer(goPos), 1000);
+        new Handler().postDelayed(new timer(goPos), 500);
     }
 
     class timer implements Runnable {
@@ -203,7 +200,8 @@ public class MainActivity extends Activity {
 
         @Override
         public void run() {
-            if (pos == goPos) {
+            if (pos == goPos && !isRun) {
+                isRun = true;
                 // 不显示听写对话框
                 ret = mIat.startListening(mRecognizerListener);
                 if (ret != ErrorCode.SUCCESS) {
@@ -213,7 +211,6 @@ public class MainActivity extends Activity {
                 }
             }
         }
-
     }
 
     /**
@@ -225,7 +222,6 @@ public class MainActivity extends Activity {
         public void onBeginOfSpeech() {
             // 此回调表示：sdk内部录音机已经准备好了，用户可以开始语音输入
             showTip("开始说话");
-            tv.setText("开始说话");
 
             showMicrophone();
             mIatResults.clear();
@@ -237,7 +233,10 @@ public class MainActivity extends Activity {
             // 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
             // 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
             showTip(error.getPlainDescription(true));
-            tv.setText(error.getPlainDescription(true));
+
+            addData(new InFo("", "", error.getPlainDescription(true), "", InFo.CONTENT_ROBOT));
+
+            isRun = false;
             mIatResults.clear();
             showError();
             gogogo();
@@ -254,6 +253,7 @@ public class MainActivity extends Activity {
             Log.d(TAG, results.getResultString());
             printResult(results);        // TODO 最后的结果
             if (isLast) {
+                isRun = false;
                 showSuccess();
 
                 StringBuffer resultBuffer = new StringBuffer();
@@ -262,11 +262,12 @@ public class MainActivity extends Activity {
                 }
 
                 String str = resultBuffer.toString();
-                tv.setText(str);
+                addData(new InFo("", "", str, "", InFo.CONTENT_client));
 
                 for (InFo inFo : inFos) {
                     if (str.contains(inFo.getShibieString())) {
                         showTip(inFo.getShibieString());
+                        addData(inFo);
                         switch (inFo.getType()) {
                             case FLAG_PALY_VOICE:
                                 mTts.startSpeaking(inFo.getPalyString(), mTtsListener);
@@ -276,7 +277,7 @@ public class MainActivity extends Activity {
                                     @Override
                                     public void finish() {
                                         // TODO: 2017/1/12 结束后继续监听
-//                        gogogo();
+                                        gogogo();
                                     }
                                 });
                                 return;
@@ -284,15 +285,15 @@ public class MainActivity extends Activity {
                     }
                 }
                 // TODO: 2017/1/12 继续监听
-//        gogogo();
+                addData(new InFo("", "", "我听不懂你说的话，我正在学习当中", "", InFo.CONTENT_ROBOT));
+                gogogo();
             }
         }
 
         @Override
         public void onVolumeChanged(int volume, byte[] data) {
 //            showTip("当前正在说话，音量大小：" + volume);
-            Log.d(TAG, "返回音频数据：" + data.length);
-            tv.setText("当前正在说话，音量大小：" + volume + "\n返回音频数据：" + data.length);
+            Log.d(TAG, "当前正在说话，音量大小：" + volume + "返回音频数据：" + data.length);
             if (microphoneView_layout_record != null) {
                 int v = (int) ((double) volume * 100 / 30);
                 microphoneView_layout_record.setVolume(v);
@@ -310,6 +311,12 @@ public class MainActivity extends Activity {
         }
     };
 
+    private void addData(InFo inFo) {
+        list.add(inFo);
+//        adapter.notifyDataSetChanged();
+        rlv_activity_main.scrollToPosition(adapter.getDatas().size() - 1);
+    }
+
     private void showMicrophone() {
         if (viewStub_Record == null) {
             viewStub_Record = (ViewStub) findViewById(R.id.viewStub_record);
@@ -318,8 +325,8 @@ public class MainActivity extends Activity {
             microphoneView_layout_record = (MicrophoneView) view.findViewById(R.id.microphoneView_layout_record);
         }
         microphoneView_layout_record.setModel(MicrophoneView.MODEL_RECORD);
-        if (viewStub_loading != null)
-            viewStub_loading.setVisibility(View.GONE);
+        if (viewStub_error != null)
+            viewStub_error.setVisibility(View.GONE);
         viewStub_Record.setVisibility(View.VISIBLE);
     }
 
@@ -331,25 +338,31 @@ public class MainActivity extends Activity {
             microphoneView_layout_record = (MicrophoneView) view.findViewById(R.id.microphoneView_layout_record);
         }
         microphoneView_layout_record.setModel(MicrophoneView.MODEL_LOADING);
-        if (viewStub_loading != null)
-            viewStub_loading.setVisibility(View.GONE);
+        if (viewStub_error != null)
+            viewStub_error.setVisibility(View.GONE);
         viewStub_Record.setVisibility(View.VISIBLE);
     }
 
     void showError() {
-        if (viewStub_loading != null)
-            viewStub_loading.setVisibility(View.GONE);
+        if (viewStub_error == null) {
+            viewStub_error = (ViewStub) findViewById(R.id.viewStub_error);
+            viewStub_error.setLayoutResource(R.layout.layout_error);
+//            View view = viewStub_error.inflate();
+//            microphoneView_layout_record = (MicrophoneView) view.findViewById(R.id.microphoneView_layout_record);
+        }
+
         if (viewStub_Record != null) {
             viewStub_Record.setVisibility(View.GONE);
         }
         if (microphoneView_layout_record != null) {
             microphoneView_layout_record.stop();
         }
+        viewStub_error.setVisibility(View.VISIBLE);
     }
 
     void showSuccess() {
-        if (viewStub_loading != null)
-            viewStub_loading.setVisibility(View.GONE);
+        if (viewStub_error != null)
+            viewStub_error.setVisibility(View.GONE);
         if (viewStub_Record != null) {
             viewStub_Record.setVisibility(View.GONE);
         }
