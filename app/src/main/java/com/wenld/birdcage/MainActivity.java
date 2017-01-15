@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
     private void gogogo(int time) {
         goPos++;
         if (time < 500) {
-            new Handler().postDelayed(new timer(goPos), 500);
+            new Handler().postDelayed(new timer(goPos), 200);
         } else {
             new Handler().postDelayed(new timer(goPos), time);
         }
