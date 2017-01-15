@@ -175,6 +175,8 @@ public class MainActivity extends Activity {
         inFos.add(new InFo("", "hello", "你好", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "什么名字", "我叫\" 小柒 \"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "叫什么", "我叫\" 小柒 \"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "你最喜欢谁", "我最喜欢 娜娜子姐姐了", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "喜欢谁", "我最喜欢 娜娜子姐姐了", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "你多大了", "我1岁了", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "唱歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "唱首歌", "我不会唱歌,嘿嘿嘿", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
