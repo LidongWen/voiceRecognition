@@ -60,7 +60,9 @@ public class MainActivity extends Activity {
     ViewStub viewStub_Record;//录音时UI
     MicrophoneView microphoneView_layout_record;
 
-    ViewStub viewStub_error; //正在解析语音;
+    ViewStub viewStub_error; //发生错误时;
+
+    MyDialog dialog;
 
     private int nowModel = RecordView.MODEL_RECORD;
 
@@ -82,7 +84,10 @@ public class MainActivity extends Activity {
     List<InFo> list = new ArrayList<>(50);
 
     Button btnStart;
+    Button btnBe;
+    Button btnEror;
     Button btnFlag;
+    Button btn_showDialog;
 
     List<InFo> inFos = new ArrayList<>();
 
@@ -103,16 +108,19 @@ public class MainActivity extends Activity {
 
         rlv_activity_main = (RecyclerView) findViewById(R.id.rlv_activity_main);
         adapter = new ChatAdapterForRv(this, list);
-        for (int i = 0; i < 50; i++) {
-            list.add(new InFo("", "", i + "  _______   " + i, "", InFo.CONTENT_client));
-        }
+//        for (int i = 0; i < 50; i++) {
+//            list.add(new InFo("", "", i + "  _______   " + i, "", InFo.CONTENT_client));
+//        }
         linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
         rlv_activity_main.setLayoutManager(linearLayoutManager);
         rlv_activity_main.setAdapter(adapter);
 
         btnStart = (Button) findViewById(R.id.btn_start);
+        btnBe = (Button) findViewById(R.id.btn_beging);
+        btnEror = (Button) findViewById(R.id.btn_error);
         btnFlag = (Button) findViewById(R.id.btn_flag);
+        btn_showDialog = (Button) findViewById(R.id.btn_showDialog);
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -126,7 +134,25 @@ public class MainActivity extends Activity {
                 showLoading();
             }
         });
-        gogogo();
+        btnBe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showMicrophone();
+            }
+        });
+        btnEror.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showError();
+            }
+        });
+        btn_showDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSuccess(new InFo("", "美女", "这是我找到的美女,你还满意吗？", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+            }
+        });
+//        gogogo();
     }
 
     private void initBase() {
@@ -145,6 +171,7 @@ public class MainActivity extends Activity {
 
     private void initData() {
         inFos.add(new InFo("", "你好", "你好", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
+        inFos.add(new InFo("", "美女", "这是我找到的美女，你还满意吗？", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "hello", "你好", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "什么名字", "我叫\" 小柒 \"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
         inFos.add(new InFo("", "叫什么", "我叫\" 小柒 \"", FLAG_PALY_VOICE, InFo.CONTENT_ROBOT));
@@ -186,8 +213,16 @@ public class MainActivity extends Activity {
     private boolean isRun = false;//是否正在录音
 
     private void gogogo() {
+        gogogo(0);
+    }
+
+    private void gogogo(int time) {
         goPos++;
-        new Handler().postDelayed(new timer(goPos), 500);
+        if (time < 500) {
+            new Handler().postDelayed(new timer(goPos), 500);
+        } else {
+            new Handler().postDelayed(new timer(goPos), time);
+        }
     }
 
     class timer implements Runnable {
@@ -250,10 +285,9 @@ public class MainActivity extends Activity {
         @Override
         public void onResult(RecognizerResult results, boolean isLast) {
             Log.d(TAG, results.getResultString());
-            printResult(results);        // TODO 最后的结果
+            printResult(results);
             if (isLast) {
                 isRun = false;
-                showSuccess();
 
                 StringBuffer resultBuffer = new StringBuffer();
                 for (String key : mIatResults.keySet()) {
@@ -265,6 +299,7 @@ public class MainActivity extends Activity {
 
                 for (InFo inFo : inFos) {
                     if (str.contains(inFo.getShibieString())) {
+                        showSuccess(inFo);
                         showTip(inFo.getShibieString());
                         addData(inFo);
                         switch (inFo.getType()) {
@@ -284,7 +319,8 @@ public class MainActivity extends Activity {
                     }
                 }
                 // TODO: 2017/1/12 继续监听
-                addData(new InFo("", "", "我听不懂你说的话，我正在学习当中", "", InFo.CONTENT_ROBOT));
+                addData(new InFo("", "", "抱歉，我没听明白。", "", InFo.CONTENT_ROBOT));
+                showSuccess(null);
                 gogogo();
             }
         }
@@ -312,11 +348,19 @@ public class MainActivity extends Activity {
 
     private void addData(InFo inFo) {
         list.add(inFo);
-//        adapter.notifyDataSetChanged();
+        while (list.size() > 50) {
+            list.remove(0);
+        }
+        adapter.notifyDataSetChanged();
         rlv_activity_main.scrollToPosition(adapter.getDatas().size() - 1);
     }
 
     private void showMicrophone() {
+        if (dialog != null) {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+        }
         if (viewStub_Record == null) {
             viewStub_Record = (ViewStub) findViewById(R.id.viewStub_record);
             viewStub_Record.setLayoutResource(R.layout.layout_record);
@@ -330,6 +374,11 @@ public class MainActivity extends Activity {
     }
 
     void showLoading() {
+        if (dialog != null) {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+        }
         if (viewStub_Record == null) {
             viewStub_Record = (ViewStub) findViewById(R.id.viewStub_record);
             viewStub_Record.setLayoutResource(R.layout.layout_record);
@@ -343,6 +392,11 @@ public class MainActivity extends Activity {
     }
 
     void showError() {
+        if (dialog != null) {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+        }
         if (viewStub_error == null) {
             viewStub_error = (ViewStub) findViewById(R.id.viewStub_error);
             viewStub_error.setLayoutResource(R.layout.layout_error);
@@ -359,7 +413,7 @@ public class MainActivity extends Activity {
         viewStub_error.setVisibility(View.VISIBLE);
     }
 
-    void showSuccess() {
+    void showSuccess(InFo info) {
         if (viewStub_error != null)
             viewStub_error.setVisibility(View.GONE);
         if (viewStub_Record != null) {
@@ -367,6 +421,16 @@ public class MainActivity extends Activity {
         }
         if (microphoneView_layout_record != null) {
             microphoneView_layout_record.stop();
+        }
+        if (info != null) {
+            if (info.getShibieString().equals("美女")) {
+                if (dialog == null) {
+                    dialog = new MyDialog(this);
+                }
+                if (!dialog.isShowing()) {
+                    dialog.show();
+                }
+            }
         }
     }
 
@@ -520,7 +584,7 @@ public class MainActivity extends Activity {
             } else if (error != null) {
                 showTip(error.getPlainDescription(true));
             }
-            gogogo();
+            gogogo(2000);
         }
 
         @Override

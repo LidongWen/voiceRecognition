@@ -37,7 +37,7 @@
             android:name="com.wenld.birdcage.AnimTestActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name="com.wenld.birdcage.IatSettings"
+            android:name="com.wenld.birdcage.IatSettingsActivity"
             android:screenOrientation="portrait" />
     </application>
 

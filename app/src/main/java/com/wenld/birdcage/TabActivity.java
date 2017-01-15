@@ -51,7 +51,7 @@ public class TabActivity extends AppCompatActivity {
                                 break;
                             case 1:
                                 // 语音转写
-                                intent = new Intent(TabActivity.this, IatSettings.class);
+                                intent = new Intent(TabActivity.this, IatSettingsActivity.class);
                                 break;
                             default:
 //                        showTip("在IsvDemo中哦，为了代码简洁，就不放在一起啦，^_^");

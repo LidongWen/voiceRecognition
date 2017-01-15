@@ -14,7 +14,7 @@ import com.wenld.birdcage.util.SettingTextWatcher;
 /**
  * 听写设置界面
  */
-public class IatSettings extends PreferenceActivity implements OnPreferenceChangeListener {
+public class IatSettingsActivity extends PreferenceActivity implements OnPreferenceChangeListener {
 	
 	public static final String PREFER_NAME = "com.iflytek.setting";
 	private EditTextPreference mVadbosPreference;
@@ -28,10 +28,10 @@ public class IatSettings extends PreferenceActivity implements OnPreferenceChang
 		addPreferencesFromResource(R.xml.iat_setting);
 		
 		mVadbosPreference = (EditTextPreference)findPreference("iat_vadbos_preference");
-		mVadbosPreference.getEditText().addTextChangedListener(new SettingTextWatcher(IatSettings.this,mVadbosPreference,0,10000));
+		mVadbosPreference.getEditText().addTextChangedListener(new SettingTextWatcher(IatSettingsActivity.this,mVadbosPreference,0,10000));
 		
 		mVadeosPreference = (EditTextPreference)findPreference("iat_vadeos_preference");
-		mVadeosPreference.getEditText().addTextChangedListener(new SettingTextWatcher(IatSettings.this,mVadeosPreference,0,10000));
+		mVadeosPreference.getEditText().addTextChangedListener(new SettingTextWatcher(IatSettingsActivity.this,mVadeosPreference,0,10000));
 	}
 	@Override
 	public boolean onPreferenceChange(Preference preference, Object newValue) {

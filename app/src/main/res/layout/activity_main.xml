@@ -11,8 +11,8 @@
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:background="@color/color_transparenthalf"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:background="@color/color_transparenthalf">
 
         <ViewStub
             android:id="@+id/viewStub_error"
@@ -38,14 +38,36 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/rlv_activity_main"
-        android:text="开始"
-        android:visibility="gone"/>
+        android:text="开始对话" />
+
+
+    <Button
+        android:id="@+id/btn_beging"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btn_start"
+        android:text="展示 录音 动画" />
 
     <Button
         android:id="@+id/btn_flag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/btn_start"
-        android:text="标识"
-        android:visibility="gone"/>
+        android:layout_below="@+id/btn_beging"
+        android:text="展示 标识 动画" />
+
+    <Button
+        android:id="@+id/btn_error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btn_flag"
+        android:text="展示 错误 提示" />
+
+    <Button
+        android:id="@+id/btn_showDialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rlv_activity_main"
+        android:layout_alignParentRight="true"
+        android:text="展示图片" />
+
 </RelativeLayout>
