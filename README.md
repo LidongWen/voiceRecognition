@@ -2,6 +2,7 @@
 * 可与之简单交互对话
 * 录音动画 识别动画自定义
 ## showGif
+
  ![](img/qi.gif)
 
 ## downLoad APK
